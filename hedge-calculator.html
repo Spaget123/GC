@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hedge Calculator</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #151b23;
+    --line: #232b36;
+    --text: #e6edf3;
+    --dim: #7d8896;
+    --accent: #baff29;
+    --accent-dim: #8fcf1d;
+    --danger: #ff5c5c;
+    --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    padding: 24px 16px 60px;
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub {
+    color: var(--dim);
+    font-size: 13.5px;
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--dim);
+    margin-bottom: 7px;
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    background: #0a0e14;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 0 14px;
+    transition: border-color 0.15s;
+  }
+  .input-row:focus-within {
+    border-color: var(--accent-dim);
+  }
+
+  .input-row .prefix, .input-row .suffix {
+    color: var(--dim);
+    font-family: var(--mono);
+    font-size: 14px;
+  }
+
+  input[type="number"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 17px;
+    padding: 12px 8px;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .result-card {
+    background: linear-gradient(160deg, #161f12 0%, var(--panel) 60%);
+    border: 1px solid #2a3a1a;
+    border-radius: 14px;
+    padding: 22px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .result-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .result-value {
+    font-family: var(--mono);
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .result-note {
+    color: var(--dim);
+    font-size: 12.5px;
+    margin-top: 10px;
+  }
+
+  .breakdown {
+    display: flex;
+    gap: 10px;
+  }
+
+  .outcome {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 14px 16px;
+    text-align: center;
+  }
+
+  .outcome .name {
+    font-size: 12px;
+    color: var(--dim);
+    margin-bottom: 8px;
+  }
+
+  .outcome .pl {
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 600;
+  }
+  .pl.pos { color: var(--accent); }
+  .pl.neg { color: var(--danger); }
+
+  .outcome .detail {
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 6px;
+    line-height: 1.5;
+    font-family: var(--mono);
+  }
+
+  .roi-tag {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .roi-tag.pos { background: rgba(186,255,41,0.12); color: var(--accent); }
+  .roi-tag.neg { background: rgba(255,92,92,0.12); color: var(--danger); }
+
+  .stats-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-top: 16px;
+  }
+
+  .stats-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+  }
+  .stat-row:first-of-type { border-top: none; padding-top: 0; }
+
+  .stat-name {
+    font-size: 13px;
+    color: var(--text);
+  }
+  .stat-name .hint {
+    display: block;
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding-left: 12px;
+  }
+
+  #verdict {
+    white-space: normal;
+    text-align: right;
+    font-size: 13.5px;
+  }
+
+  .warn {
+    font-size: 12px;
+    color: var(--danger);
+    margin-top: 14px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Two-way market</div>
+  <h1>Hedge stake calculator</h1>
+  <p class="sub">You already bet the long shot. This tells you how much to put on the favorite so a win there pays back exactly what you've staked on the long shot.</p>
+
+  <div class="card">
+    <div class="field">
+      <label for="bigOdds">Long-shot multiplier</label>
+      <div class="input-row">
+        <input type="number" id="bigOdds" value="5.5" step="0.01" min="1.01">
+        <span class="suffix">x</span>
+      </div>
+    </div>
+    <div class="field">
+      <label for="bigStake">Amount you bet on it</label>
+      <div class="input-row">
+        <span class="prefix">$</span>
+        <input type="number" id="bigStake" value="10" step="0.01" min="0">
+      </div>
+    </div>
+    <div class="field">
+      <label for="smallOdds">Favorite's multiplier</label>
+      <div class="input-row">
+        <input type="number" id="smallOdds" value="1.73" step="0.01" min="1.01">
+        <span class="suffix">x</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-card">
+    <div class="result-label">Bet this on the favorite</div>
+    <div class="result-value" id="hedgeResult">$0.00</div>
+    <div class="result-note" id="hedgeNote">to win back your $10 if the favorite hits</div>
+  </div>
+
+  <div class="breakdown">
+    <div class="outcome" style="flex: 1;">
+      <div class="name">If long shot wins instead</div>
+      <div class="pl" id="plLongshot">$0.00</div>
+      <div class="detail" id="detailLongshot"></div>
+      <div class="roi-tag" id="roiTag">0% ROI</div>
+    </div>
+  </div>
+
+  <div class="stats-card">
+    <div class="stats-title">Worth a look?</div>
+    <div class="stat-row">
+      <div class="stat-name">Long shot implied odds
+        <span class="hint">what the market thinks it'll win</span>
+      </div>
+      <div class="stat-value" id="impliedLong">0%</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-name">Favorite implied odds
+        <span class="hint">what the market thinks it'll win</span>
+      </div>
+      <div class="stat-value" id="impliedFav">0%</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-name">Bookmaker margin
+        <span class="hint">the house's built-in edge on this market</span>
+      </div>
+      <div class="stat-value" id="overround">0%</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-name">Total at risk
+        <span class="hint">long shot + hedge combined</span>
+      </div>
+      <div class="stat-value" id="totalStaked">$0.00</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-name">Verdict
+        <span class="hint">does this split actually make sense?</span>
+      </div>
+      <div class="stat-value" id="verdict">—</div>
+    </div>
+  </div>
+  <div class="warn" id="warning" style="display:none;"></div>
+</div>
+
+<script>
+  const bigOddsEl = document.getElementById('bigOdds');
+  const bigStakeEl = document.getElementById('bigStake');
+  const smallOddsEl = document.getElementById('smallOdds');
+
+  function fmt(n) {
+    return '$' + n.toFixed(2);
+  }
+
+  function calc() {
+    const bigOdds = parseFloat(bigOddsEl.value) || 0;
+    const bigStake = parseFloat(bigStakeEl.value) || 0;
+    const smallOdds = parseFloat(smallOddsEl.value) || 0;
+
+    const warnEl = document.getElementById('warning');
+    warnEl.style.display = 'none';
+
+    if (smallOdds <= 1) {
+      warnEl.textContent = "Favorite's multiplier must be greater than 1x.";
+      warnEl.style.display = 'block';
+      return;
+    }
+
+    // hedge stake so that profit on hedge bet == stake already placed on long shot
+    const hedgeStake = bigStake / (smallOdds - 1);
+
+    document.getElementById('hedgeResult').textContent = fmt(hedgeStake);
+    document.getElementById('hedgeNote').textContent =
+      `to win back your $${bigStake.toFixed(2)} if the favorite hits`;
+
+    // Long shot wins (the favorite-wins case is always ~$0 by construction)
+    const longshotPayout = bigStake * bigOdds;
+    const longshotProfit = longshotPayout - bigStake - hedgeStake; // lost the hedge stake
+    const plLong = document.getElementById('plLongshot');
+    plLong.textContent = fmt(longshotProfit);
+    plLong.className = 'pl ' + (longshotProfit >= 0 ? 'pos' : 'neg');
+    document.getElementById('detailLongshot').textContent =
+      `Payout ${fmt(longshotPayout)} − stakes ${fmt(bigStake + hedgeStake)}`;
+
+    // ROI on total money committed, realized only if the long shot hits
+    const totalStaked = bigStake + hedgeStake;
+    const roi = totalStaked > 0 ? (longshotProfit / totalStaked) * 100 : 0;
+    const roiTag = document.getElementById('roiTag');
+    roiTag.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}% ROI`;
+    roiTag.className = 'roi-tag ' + (roi >= 0 ? 'pos' : 'neg');
+
+    // Implied probabilities from the odds themselves
+    const impliedLong = bigOdds > 0 ? (1 / bigOdds) * 100 : 0;
+    const impliedFav = smallOdds > 0 ? (1 / smallOdds) * 100 : 0;
+    const overround = impliedLong + impliedFav - 100;
+
+    document.getElementById('impliedLong').textContent = impliedLong.toFixed(1) + '%';
+    document.getElementById('impliedFav').textContent = impliedFav.toFixed(1) + '%';
+
+    const overroundEl = document.getElementById('overround');
+    overroundEl.textContent = (overround >= 0 ? '+' : '') + overround.toFixed(1) + '%';
+    overroundEl.style.color = overround > 0 ? 'var(--danger)' : 'var(--accent)';
+
+    document.getElementById('totalStaked').textContent = fmt(totalStaked);
+
+    // Verdict: is this split actually a free upside, or does it lose money outright?
+    const verdictEl = document.getElementById('verdict');
+    if (longshotProfit > 0.01) {
+      verdictEl.textContent = 'Risk-free upside';
+      verdictEl.style.color = 'var(--accent)';
+    } else if (longshotProfit < -0.01) {
+      verdictEl.textContent = `Loses ${fmt(Math.abs(longshotProfit))} either way`;
+      verdictEl.style.color = 'var(--danger)';
+    } else {
+      verdictEl.textContent = 'Dead even either way';
+      verdictEl.style.color = 'var(--dim)';
+    }
+  }
+
+  [bigOddsEl, bigStakeEl, smallOddsEl].forEach(el => {
+    el.addEventListener('input', calc);
+  });
+
+  calc();
+</script>
+</body>
+</html>
